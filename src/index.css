@@ -1,1 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --font-display: "Anton", sans-serif;
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-anime-pink: #ff007f;
+  --color-anime-blue: #00ffff;
+  --color-anime-purple: #9d00ff;
+  --color-anime-bg: #050505;
+  --color-anime-surface: #111111;
+}
+
+@layer base {
+  body {
+    @apply font-sans antialiased bg-anime-bg text-white;
+  }
+}
+
+.anime-gradient {
+  background: linear-gradient(135deg, var(--color-anime-pink) 0%, var(--color-anime-purple) 50%, var(--color-anime-blue) 100%);
+}
+
+.glass-card {
+  @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
+}
+
+.neon-shadow {
+  box-shadow: 0 0 30px rgba(255, 0, 127, 0.3);
+}
+
+.neon-text {
+  text-shadow: 0 0 15px rgba(255, 0, 127, 0.5);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}

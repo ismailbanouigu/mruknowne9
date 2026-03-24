@@ -4,6 +4,30 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>My Google AI Studio App</title>
+    <script>
+      // Suppress ResizeObserver loop limit exceeded errors
+      window.addEventListener('error', (e) => {
+        if (e.message === 'ResizeObserver loop completed with undelivered notifications.' ||
+            e.message === 'ResizeObserver loop limit exceeded') {
+          const resizeObserverErrDiv = document.getElementById('webpack-dev-server-client-overlay-div');
+          const resizeObserverErr = document.getElementById('webpack-dev-server-client-overlay');
+          if (resizeObserverErr) resizeObserverErr.setAttribute('style', 'display: none');
+          if (resizeObserverErrDiv) resizeObserverErrDiv.setAttribute('style', 'display: none');
+          e.stopImmediatePropagation();
+        }
+      });
+
+      // Handle fetch property error
+      try {
+        const originalFetch = window.fetch;
+        Object.defineProperty(window, 'fetch', {
+          get: () => originalFetch,
+          configurable: true
+        });
+      } catch (e) {
+        console.warn('Fetch property already defined or immutable');
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

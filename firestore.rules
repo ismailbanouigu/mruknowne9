@@ -11,19 +11,18 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    function isValidProject(data) {
-      return data.html is string && data.html.size() < 100000 &&
-             data.css is string && data.css.size() < 100000 &&
-             data.js is string && data.js.size() < 100000 &&
-             data.projectName is string && data.projectName.size() < 200 &&
-             (data.authorId == 'guest' || (isAuthenticated() && data.authorId == request.auth.uid)) &&
-             data.slug is string && data.slug.size() < 100;
+    match /projects/{projectId} {
+      allow read: if true;
+      allow create: if request.resource.data.slug is string && request.resource.data.slug.size() > 0;
+      allow update, delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isAdmin());
     }
 
-    match /projects/{projectId} {
-      allow read: if true; // Publicly readable
-      allow create: if (isAuthenticated() || request.resource.data.authorId == 'guest') && isValidProject(request.resource.data);
-      allow update, delete: if isOwner(resource.data.authorId) && isValidProject(request.resource.data);
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.email == "ismailbanouigu@gmail.com" && request.auth.token.email_verified == true;
+    }
+
+    match /drafts/{userId} {
+      allow read, write: if isOwner(userId);
     }
   }
 }
