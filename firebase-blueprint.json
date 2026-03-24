@@ -10,6 +10,7 @@
         "js": { "type": "string", "description": "JS content" },
         "authorId": { "type": "string", "description": "UID of the author" },
         "authorName": { "type": "string", "description": "Name of the author" },
+        "isGuest": { "type": "boolean", "description": "Whether this was a free trial attempt" },
         "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
         "slug": { "type": "string", "description": "Unique slug for the project" }
       },

@@ -15,13 +15,14 @@ service cloud.firestore {
       return data.html is string && data.html.size() < 100000 &&
              data.css is string && data.css.size() < 100000 &&
              data.js is string && data.js.size() < 100000 &&
-             data.authorId == request.auth.uid &&
+             data.projectName is string && data.projectName.size() < 200 &&
+             (data.authorId == 'guest' || (isAuthenticated() && data.authorId == request.auth.uid)) &&
              data.slug is string && data.slug.size() < 100;
     }
 
     match /projects/{projectId} {
       allow read: if true; // Publicly readable
-      allow create: if isAuthenticated() && isValidProject(request.resource.data);
+      allow create: if (isAuthenticated() || request.resource.data.authorId == 'guest') && isValidProject(request.resource.data);
       allow update, delete: if isOwner(resource.data.authorId) && isValidProject(request.resource.data);
     }
   }

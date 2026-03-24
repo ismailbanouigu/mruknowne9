@@ -98,6 +98,12 @@ export default function App() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
   const [isLoadingProject, setIsLoadingProject] = useState(false);
+  const [freeAttempts, setFreeAttempts] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return parseInt(localStorage.getItem('free_attempts') || '0');
+    }
+    return 0;
+  });
 
   // Check for project in URL
   useEffect(() => {
@@ -169,38 +175,69 @@ export default function App() {
     }
   };
 
-  const handlePublish = async () => {
+  const [projectName, setProjectName] = useState('');
+  const [isNaming, setIsNaming] = useState(false);
+  const [userSlug, setUserSlug] = useState('');
+
+  const handlePublishClick = () => {
     if (!user) {
-      toast.error("Please login to publish your project");
-      handleLogin();
+      if (freeAttempts >= 2) {
+        toast.error("khonaa f lah dir login ila baghi tstafde", {
+          description: "You've used your 2 free trial attempts.",
+          duration: 5000,
+        });
+        handleLogin();
+        return;
+      }
+      toast.info(`Free Trial: ${2 - freeAttempts} attempts left!`, {
+        description: "Login to save unlimited projects."
+      });
+    }
+    setIsNaming(true);
+    if (!userSlug) {
+      setUserSlug(Math.random().toString(36).substring(7));
+    }
+  };
+
+  const handleConfirmPublish = async () => {
+    if (!projectName.trim()) {
+      toast.error("S'il vous plaît, donnez un nom à votre projet");
       return;
     }
 
-    const publishPromise = new Promise(async (resolve, reject) => {
-      try {
-        const docRef = await addDoc(collection(db, 'projects'), {
-          html,
-          css,
-          js,
-          authorId: user.uid,
-          authorName: user.displayName,
-          createdAt: serverTimestamp(),
-          slug: Math.random().toString(36).substring(7)
-        });
-        
-        const url = `${window.location.origin}${window.location.pathname}?project=${docRef.id}`;
-        setPublishedUrl(url);
-        resolve(url);
-      } catch (error) {
-        reject(error);
-      }
-    });
+    setIsNaming(false);
+    setIsPublishing(true);
+    
+    try {
+      const payload = {
+        html,
+        css,
+        js,
+        projectName: projectName.trim(),
+        authorId: user ? user.uid : 'guest',
+        authorName: user ? user.displayName : 'Guest User',
+        isGuest: !user,
+        createdAt: serverTimestamp(),
+        slug: userSlug || Math.random().toString(36).substring(7)
+      };
 
-    toast.promise(publishPromise, {
-      loading: 'Publishing your project...',
-      success: 'Project published successfully!',
-      error: 'Failed to publish project',
-    });
+      const docRef = await addDoc(collection(db, 'projects'), payload);
+      
+      if (!user) {
+        const newCount = freeAttempts + 1;
+        setFreeAttempts(newCount);
+        localStorage.setItem('free_attempts', newCount.toString());
+      }
+
+      const url = `${window.location.origin}${window.location.pathname}?project=${docRef.id}`;
+      setPublishedUrl(url);
+      toast.success('Project published successfully!');
+    } catch (error) {
+      console.error("Publish failed:", error);
+      toast.error('Failed to publish project');
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
   const [copied, setCopied] = useState(false);
@@ -276,7 +313,7 @@ export default function App() {
           <div className="h-6 w-px bg-gray-300 dark:bg-white/10 mx-2" />
 
           <button 
-            onClick={handlePublish}
+            onClick={handlePublishClick}
             disabled={isPublishing}
             className={cn(
               "flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed",
@@ -438,6 +475,69 @@ export default function App() {
         </div>
       </main>
 
+      {/* Naming Modal */}
+      <AnimatePresence>
+        {isNaming && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className={cn(
+                "w-full max-w-md p-8 rounded-2xl shadow-2xl border",
+                theme === 'vs-dark' ? "bg-[#1e1e1e] border-white/10 text-white" : "bg-white border-gray-200 text-gray-900"
+              )}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mb-6">
+                  <FileCode className="w-10 h-10 text-blue-500" />
+                </div>
+                <h2 className="text-2xl font-bold mb-2">Name Your Project</h2>
+                <p className="text-gray-500 dark:text-gray-400 mb-8">
+                  Give your project a name before publishing it to the web.
+                </p>
+                
+                <div className="w-full space-y-4 mb-8">
+                  <div className="text-left">
+                    <label className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2 block">Project Name</label>
+                    <input 
+                      autoFocus
+                      type="text"
+                      value={projectName}
+                      onChange={(e) => setProjectName(e.target.value)}
+                      placeholder="My Awesome Project"
+                      className={cn(
+                        "w-full p-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition-all",
+                        theme === 'vs-dark' ? "bg-black/20 border-white/10 text-white" : "bg-gray-50 border-gray-200 text-gray-900"
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex w-full gap-3">
+                  <button 
+                    onClick={() => setIsNaming(false)}
+                    className="flex-1 py-3 px-4 bg-gray-200/50 dark:bg-white/5 hover:bg-gray-300 dark:hover:bg-white/10 rounded-xl font-medium transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleConfirmPublish}
+                    className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-all flex items-center justify-center gap-2"
+                  >
+                    Confirm & Publish
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Published Success Modal */}
       <AnimatePresence>
         {publishedUrl && (
@@ -459,24 +559,30 @@ export default function App() {
                 <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mb-6">
                   <CheckCircle2 className="w-10 h-10 text-green-500" />
                 </div>
-                <h2 className="text-2xl font-bold mb-2">Project Published!</h2>
+                <h2 className="text-2xl font-bold mb-2">Mabrouk! Project Published</h2>
                 <p className="text-gray-500 dark:text-gray-400 mb-8">
-                  Your project is now live. Share this link with anyone to show off your work.
+                  Your project <span className="font-bold text-blue-500">"{projectName}"</span> is now live on the web.
                 </p>
                 
                 <div className={cn(
-                  "w-full flex items-center gap-2 p-3 rounded-xl border mb-6 transition-all",
-                  theme === 'vs-dark' ? "bg-black/20 border-white/5" : "bg-gray-50 border-gray-200",
-                  copied && "border-green-500 ring-1 ring-green-500/50"
+                  "w-full flex items-center gap-3 p-4 rounded-xl border mb-8 transition-all group",
+                  theme === 'vs-dark' ? "bg-black/40 border-white/10" : "bg-gray-50 border-gray-200",
+                  copied && "border-green-500 ring-2 ring-green-500/20"
                 )}>
-                  <input 
-                    readOnly 
-                    value={publishedUrl}
-                    className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-mono truncate"
-                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Project Link</p>
+                    <input 
+                      readOnly 
+                      value={publishedUrl}
+                      className="w-full bg-transparent border-none focus:ring-0 text-sm font-mono truncate text-blue-500"
+                    />
+                  </div>
                   <button 
                     onClick={handleCopyLink}
-                    className="p-2 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg transition-colors relative"
+                    className={cn(
+                      "p-3 rounded-lg transition-all flex items-center gap-2 font-medium",
+                      copied ? "bg-green-500 text-white" : "bg-blue-600 text-white hover:bg-blue-700"
+                    )}
                   >
                     <AnimatePresence mode="wait">
                       {copied ? (
@@ -485,8 +591,10 @@ export default function App() {
                           initial={{ scale: 0.5, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
                           exit={{ scale: 0.5, opacity: 0 }}
+                          className="flex items-center gap-2"
                         >
-                          <CheckCircle2 className="w-4 h-4 text-green-500" />
+                          <CheckCircle2 className="w-4 h-4" />
+                          Copied!
                         </motion.div>
                       ) : (
                         <motion.div
@@ -494,8 +602,10 @@ export default function App() {
                           initial={{ scale: 0.5, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
                           exit={{ scale: 0.5, opacity: 0 }}
+                          className="flex items-center gap-2"
                         >
-                          <Copy className="w-4 h-4 text-blue-500" />
+                          <Copy className="w-4 h-4" />
+                          Copy Link
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -504,7 +614,10 @@ export default function App() {
 
                 <div className="flex w-full gap-3">
                   <button 
-                    onClick={() => setPublishedUrl(null)}
+                    onClick={() => {
+                      setPublishedUrl(null);
+                      setProjectName('');
+                    }}
                     className="flex-1 py-3 px-4 bg-gray-200/50 dark:bg-white/5 hover:bg-gray-300 dark:hover:bg-white/10 rounded-xl font-medium transition-all"
                   >
                     Close
