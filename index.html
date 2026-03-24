@@ -4,33 +4,70 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>My Google AI Studio App</title>
-    <script>
-      // Suppress ResizeObserver loop limit exceeded errors
-      window.addEventListener('error', (e) => {
-        if (e.message === 'ResizeObserver loop completed with undelivered notifications.' ||
-            e.message === 'ResizeObserver loop limit exceeded') {
-          const resizeObserverErrDiv = document.getElementById('webpack-dev-server-client-overlay-div');
-          const resizeObserverErr = document.getElementById('webpack-dev-server-client-overlay');
-          if (resizeObserverErr) resizeObserverErr.setAttribute('style', 'display: none');
-          if (resizeObserverErrDiv) resizeObserverErrDiv.setAttribute('style', 'display: none');
-          e.stopImmediatePropagation();
-        }
-      });
-
-      // Handle fetch property error
-      try {
-        const originalFetch = window.fetch;
-        Object.defineProperty(window, 'fetch', {
-          get: () => originalFetch,
-          configurable: true
-        });
-      } catch (e) {
-        console.warn('Fetch property already defined or immutable');
-      }
-    </script>
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Suppress ResizeObserver loop errors
+      const suppressResizeObserver = (e) => {
+        if (e && (e.message === 'ResizeObserver loop completed with undelivered notifications' ||
+                  e.message === 'ResizeObserver loop limit exceeded' ||
+                  (typeof e === 'string' && e.includes('ResizeObserver loop')))) {
+          if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+          if (e.preventDefault) e.preventDefault();
+          return true;
+        }
+        return false;
+      };
+
+      window.addEventListener('error', (e) => {
+        if (suppressResizeObserver(e)) return;
+      });
+
+      window.addEventListener('unhandledrejection', (e) => {
+        if (suppressResizeObserver(e.reason)) return;
+      });
+
+      const originalError = console.error;
+      console.error = (...args) => {
+        if (args[0] && suppressResizeObserver(args[0])) {
+          return;
+        }
+        originalError.apply(console, args);
+      };
+
+      // Handle the "Cannot set property fetch of #<Window> which has only a getter" error
+      // This happens when a library tries to overwrite window.fetch in an environment where it's read-only
+      (function() {
+        const originalFetch = window.fetch;
+        try {
+          // Attempt to make fetch writable if it's not
+          const descriptor = Object.getOwnPropertyDescriptor(window, 'fetch');
+          if (descriptor && !descriptor.writable) {
+            Object.defineProperty(window, 'fetch', {
+              value: originalFetch,
+              writable: true,
+              configurable: true,
+              enumerable: true
+            });
+          }
+        } catch (e) {
+          // If we can't make it writable, try to define a setter that doesn't throw
+          try {
+            Object.defineProperty(window, 'fetch', {
+              get: function() { return originalFetch; },
+              set: function(v) { 
+                console.warn('Prevented attempt to overwrite read-only window.fetch');
+              },
+              configurable: true,
+              enumerable: true
+            });
+          } catch (err) {
+            console.error('Failed to patch window.fetch:', err);
+          }
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
