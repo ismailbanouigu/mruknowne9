@@ -1,0 +1,25 @@
+{
+  "entities": {
+    "Project": {
+      "title": "Project",
+      "description": "A published HTML/CSS/JS project",
+      "type": "object",
+      "properties": {
+        "html": { "type": "string", "description": "HTML content" },
+        "css": { "type": "string", "description": "CSS content" },
+        "js": { "type": "string", "description": "JS content" },
+        "authorId": { "type": "string", "description": "UID of the author" },
+        "authorName": { "type": "string", "description": "Name of the author" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+        "slug": { "type": "string", "description": "Unique slug for the project" }
+      },
+      "required": ["html", "css", "js", "authorId", "createdAt", "slug"]
+    }
+  },
+  "firestore": {
+    "/projects/{projectId}": {
+      "schema": "Project",
+      "description": "Collection of published projects"
+    }
+  }
+}
