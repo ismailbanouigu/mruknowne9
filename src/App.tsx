@@ -643,7 +643,7 @@ function App() {
           <div className="p-2 bg-anime-pink rounded-xl shadow-[0_0_20px_rgba(255,0,127,0.4)]">
             <Code2 className="w-6 h-6 md:w-7 md:h-7 text-white" />
           </div>
-          <span className="font-display text-2xl md:text-3xl text-white tracking-tight">MURUNKNOWN<span className="text-anime-pink">09</span></span>
+          <span className="font-display text-2xl md:text-3xl text-white tracking-tight text-outline">MURUNKNOWN<span className="text-anime-pink">09</span></span>
         </div>
         <div className="flex items-center gap-4 md:gap-8">
           {user ? (
@@ -680,7 +680,7 @@ function App() {
             <div className="w-2 h-2 rounded-full bg-anime-pink animate-ping" />
             <span className="text-anime-pink text-[10px] font-bold tracking-[0.2em] uppercase">Next-Gen Development Platform</span>
           </div>
-          <h1 className="font-display text-[12vw] sm:text-[10vw] md:text-[8vw] leading-[0.85] text-white mb-6 md:mb-8 select-none tracking-tighter break-words">
+          <h1 className="font-display text-[12vw] sm:text-[10vw] md:text-[8vw] leading-[0.85] text-white mb-6 md:mb-8 select-none tracking-tighter break-words text-outline">
             MURUNKNOWN<span className="text-anime-pink">09</span>
           </h1>
           <p className="text-slate-400 text-sm md:text-lg max-w-2xl mx-auto mb-8 md:mb-12 font-light leading-relaxed px-4">
@@ -796,7 +796,7 @@ function App() {
                 <span className="hidden sm:inline text-[10px] text-slate-500 font-sans uppercase tracking-[0.2em]">Project</span>
               </span>
             ) : (
-              <span className="text-white">MURUNKNOWN<span className="text-anime-pink">09</span></span>
+              <span className="text-white text-outline">MURUNKNOWN<span className="text-anime-pink">09</span></span>
             )}
           </h1>
         </div>
