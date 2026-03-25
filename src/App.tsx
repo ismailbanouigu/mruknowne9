@@ -9,6 +9,7 @@ import {
   Monitor, 
   Smartphone, 
   Tablet,
+  Layout,
   Moon,
   Sun,
   FileCode,
@@ -420,7 +421,7 @@ function App() {
   }, [html, css, js, updatePreview]);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [mobileActiveView, setMobileActiveView] = useState<'editor' | 'preview'>('editor');
+  const [mobileLayout, setMobileLayout] = useState<'editor' | 'split' | 'preview'>('split');
 
   const handleLogin = async () => {
     try {
@@ -653,7 +654,7 @@ function App() {
           ) : (
             <button 
               onClick={handleLogin}
-              className="hidden sm:block px-6 md:px-8 py-2 md:py-2.5 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 rounded-full text-white font-semibold transition-all"
+              className="px-6 md:px-8 py-2 md:py-2.5 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 rounded-full text-white font-semibold transition-all"
             >
               Login
             </button>
@@ -801,22 +802,6 @@ function App() {
         </div>
 
         <div className="flex items-center gap-2 md:gap-4">
-          {/* Mobile View Toggle */}
-          <div className="flex md:hidden items-center bg-slate-800/50 rounded-xl p-1 border border-slate-700/50">
-            <button 
-              onClick={() => setMobileActiveView('editor')}
-              className={cn("px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all", mobileActiveView === 'editor' ? "bg-anime-pink text-white" : "text-slate-400")}
-            >
-              CODE
-            </button>
-            <button 
-              onClick={() => setMobileActiveView('preview')}
-              className={cn("px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all", mobileActiveView === 'preview' ? "bg-anime-blue text-white" : "text-slate-400")}
-            >
-              LIVE
-            </button>
-          </div>
-
           <div className="hidden md:flex items-center bg-slate-800/50 rounded-full p-1 border border-slate-700/50">
             <button 
               onClick={() => setPreviewDevice('desktop')}
@@ -979,7 +964,7 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+      <main className="flex-1 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden relative">
         {isLoadingProject && (
           <div className="absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center">
             <div className="flex flex-col items-center gap-6 text-white">
@@ -1053,9 +1038,9 @@ function App() {
 
         {/* Editor Section */}
         <div className={cn(
-          "flex flex-col border-r border-white/10 transition-all duration-300",
+          "flex flex-col border-b md:border-b-0 md:border-r border-white/10 transition-all duration-300",
           "w-full md:w-1/2",
-          mobileActiveView === 'preview' ? "hidden md:flex" : "flex"
+          mobileLayout === 'editor' ? "h-full" : mobileLayout === 'preview' ? "hidden md:flex" : "h-[450px] md:h-full"
         )}>
           <div className={cn(
             "flex items-center gap-3 p-3 border-b",
@@ -1143,7 +1128,7 @@ function App() {
         <div className={cn(
           "flex-1 flex flex-col p-4 md:p-6 transition-colors relative",
           theme === 'vs-dark' ? "bg-[#050505]" : "bg-gray-200",
-          mobileActiveView === 'editor' ? "hidden md:flex" : "flex"
+          mobileLayout === 'preview' ? "min-h-full" : mobileLayout === 'editor' ? "hidden md:flex" : "min-h-[450px] md:min-h-0"
         )}>
           <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:30px_30px] pointer-events-none" />
           
@@ -1178,6 +1163,42 @@ function App() {
               />
             </motion.div>
           </div>
+        </div>
+
+        {/* Mobile Layout Switcher */}
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex md:hidden items-center bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-2xl p-1.5 shadow-2xl">
+          <button 
+            onClick={() => setMobileLayout('editor')}
+            className={cn(
+              "p-2.5 rounded-xl transition-all",
+              mobileLayout === 'editor' ? "bg-anime-pink text-white shadow-lg shadow-anime-pink/20" : "text-slate-500 hover:text-slate-300"
+            )}
+            title="Editor Only"
+          >
+            <FileCode className="w-5 h-5" />
+          </button>
+          <div className="w-px h-4 bg-white/10 mx-1" />
+          <button 
+            onClick={() => setMobileLayout('split')}
+            className={cn(
+              "p-2.5 rounded-xl transition-all",
+              mobileLayout === 'split' ? "bg-anime-blue text-white shadow-lg shadow-anime-blue/20" : "text-slate-500 hover:text-slate-300"
+            )}
+            title="Split View"
+          >
+            <Layout className="w-5 h-5" />
+          </button>
+          <div className="w-px h-4 bg-white/10 mx-1" />
+          <button 
+            onClick={() => setMobileLayout('preview')}
+            className={cn(
+              "p-2.5 rounded-xl transition-all",
+              mobileLayout === 'preview' ? "bg-anime-pink text-white shadow-lg shadow-anime-pink/20" : "text-slate-500 hover:text-slate-300"
+            )}
+            title="Preview Only"
+          >
+            <Monitor className="w-5 h-5" />
+          </button>
         </div>
       </main>
 
